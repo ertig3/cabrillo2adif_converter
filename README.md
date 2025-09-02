@@ -1,4 +1,4 @@
-# Cabrillo2ADIF Converter v2.1
+# Cabrillo2ADIF Converter v0.9
 
 Contest log conversion from Cabrillo to ADIF 3.1.4 format.
 
