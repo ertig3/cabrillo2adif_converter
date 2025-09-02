@@ -24,7 +24,7 @@ Contest log conversion from Cabrillo to ADIF 3.1.4 format.
 ## Installation
 
 ### Option 1: EXE File
-1. Download `Cabrillo2ADIF_Converter_v2.1.exe`
+1. Download `Cabrillo2ADIF_Converter_v0.9.exe`
 2. Run directly - no Python required
 
 ### Option 2: Source Code
