@@ -30,8 +30,8 @@ Contest log conversion from Cabrillo to ADIF 3.1.4 format.
 ### Option 2: Source Code
 1. Ensure Python 3.8+ installed
 2. Download all Python files
-3. Run: `python main.py`
+3. Run: `main.py`
 
 ### Option 3: Build from Source
 ```bash
-python build.bat
+build.bat
