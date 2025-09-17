@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 ADIF Generator for Cabrillo2ADIF Converter
-Date: 2025-09-02 19:31:37
+Updated to handle OPERATOR / OPERATORS fields according to ADIF practice:
+ - <OPERATOR> contains the primary (first) operator callsign.
+ - <OPERATORS> contains a comma-separated list (no spaces) of ALL operators, only emitted when more than one operator exists.
+Date: 2025-09-17
 User: ertig3
 """
 
@@ -94,24 +97,29 @@ class ADIFGenerator:
             if 'category_power' in contest_info:
                 header += f"<CATEGORY_POWER:{len(contest_info['category_power'])}>{contest_info['category_power']}\n"
             
-            # Handle OPERATORS field from Cabrillo header
+            # Proper handling of OPERATOR / OPERATORS fields:
+            # - Split raw operators string on comma, semicolon, or whitespace
+            # - Normalize to uppercase, strip, remove duplicates (preserve order)
+            # - <OPERATOR> = first element
+            # - <OPERATORS> only emitted if more than one operator exists
             if 'operators' in contest_info and contest_info['operators']:
-                operators_str = contest_info['operators'].strip()
-                if operators_str:
-                    # Split operators by comma, semicolon, or whitespace
+                raw_ops = contest_info['operators'].strip()
+                if raw_ops:
                     import re
-                    operators = re.split(r'[,;\s]+', operators_str)
-                    operators = [op.strip() for op in operators if op.strip()]
-                    
-                    if len(operators) == 1:
-                        # Single operator - use OPERATOR field
-                        operator = operators[0]
-                        header += f"<OPERATOR:{len(operator)}>{operator}\n"
-                    elif len(operators) > 1:
-                        # Multiple operators - use OPERATOR field with comma-separated list
-                        # This is the most compatible approach with ADIF readers
-                        operators_combined = ', '.join(operators)
-                        header += f"<OPERATOR:{len(operators_combined)}>{operators_combined}\n"
+                    split_ops = [o.strip().upper() for o in re.split(r'[\s,;]+', raw_ops) if o.strip()]
+                    # Deduplicate while preserving order
+                    seen = set()
+                    unique_ops = []
+                    for op in split_ops:
+                        if op not in seen:
+                            seen.add(op)
+                            unique_ops.append(op)
+                    if unique_ops:
+                        primary = unique_ops[0]
+                        header += f"<OPERATOR:{len(primary)}>{primary}\n"
+                        if len(unique_ops) > 1:
+                            ops_field = ",".join(unique_ops)  # no spaces per spec
+                            header += f"<OPERATORS:{len(ops_field)}>{ops_field}\n"
         
         header += "\n"
         return header
@@ -253,4 +261,4 @@ class ADIFGenerator:
             return ""
         
         value_str = str(value)
-        return f"<{field_name}:{len(value_str)}>{value_str}"
+        return f"<{{field_name}}:{{len(value_str)}}>{{value_str}}"
