@@ -93,6 +93,25 @@ class ADIFGenerator:
             
             if 'category_power' in contest_info:
                 header += f"<CATEGORY_POWER:{len(contest_info['category_power'])}>{contest_info['category_power']}\n"
+            
+            # Handle OPERATORS field from Cabrillo header
+            if 'operators' in contest_info and contest_info['operators']:
+                operators_str = contest_info['operators'].strip()
+                if operators_str:
+                    # Split operators by comma, semicolon, or whitespace
+                    import re
+                    operators = re.split(r'[,;\s]+', operators_str)
+                    operators = [op.strip() for op in operators if op.strip()]
+                    
+                    if len(operators) == 1:
+                        # Single operator - use OPERATOR field
+                        operator = operators[0]
+                        header += f"<OPERATOR:{len(operator)}>{operator}\n"
+                    elif len(operators) > 1:
+                        # Multiple operators - use OPERATOR field with comma-separated list
+                        # This is the most compatible approach with ADIF readers
+                        operators_combined = ', '.join(operators)
+                        header += f"<OPERATOR:{len(operators_combined)}>{operators_combined}\n"
         
         header += "\n"
         return header
