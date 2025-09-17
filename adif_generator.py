@@ -80,6 +80,7 @@ class ADIFGenerator:
         header += f"<CREATED_TIMESTAMP:15>{datetime.utcnow().strftime('%Y%m%d %H%M%S')}\n"
         
         if contest_info:
+            # Standard ADIF fields
             if 'contest' in contest_info:
                 contest_name = contest_info['contest']
                 header += f"<CONTEST_ID:{len(contest_name)}>{contest_name}\n"
@@ -93,6 +94,61 @@ class ADIFGenerator:
             
             if 'category_power' in contest_info:
                 header += f"<CATEGORY_POWER:{len(contest_info['category_power'])}>{contest_info['category_power']}\n"
+            
+            # Additional standard ADIF category fields
+            if 'category_transmitter' in contest_info:
+                header += f"<CATEGORY_TRANSMITTER:{len(contest_info['category_transmitter'])}>{contest_info['category_transmitter']}\n"
+            
+            if 'category_band' in contest_info:
+                header += f"<CATEGORY_BAND:{len(contest_info['category_band'])}>{contest_info['category_band']}\n"
+            
+            if 'category_mode' in contest_info:
+                header += f"<CATEGORY_MODE:{len(contest_info['category_mode'])}>{contest_info['category_mode']}\n"
+            
+            if 'claimed_score' in contest_info:
+                header += f"<CLAIMED_SCORE:{len(contest_info['claimed_score'])}>{contest_info['claimed_score']}\n"
+            
+            if 'name' in contest_info:
+                header += f"<NAME:{len(contest_info['name'])}>{contest_info['name']}\n"
+            
+            if 'email' in contest_info:
+                header += f"<EMAIL:{len(contest_info['email'])}>{contest_info['email']}\n"
+            
+            # Handle OPERATOR/OPERATORS field with deduplication and uppercase
+            if 'operators' in contest_info:
+                operators_str = contest_info['operators']
+                # Split by comma or space, deduplicate, and convert to uppercase
+                operators_list = []
+                for op in operators_str.replace(',', ' ').split():
+                    op_clean = op.strip().upper()
+                    if op_clean and op_clean not in operators_list:
+                        operators_list.append(op_clean)
+                
+                if operators_list:
+                    # Use first operator for OPERATOR field
+                    first_operator = operators_list[0]
+                    header += f"<OPERATOR:{len(first_operator)}>{first_operator}\n"
+                    
+                    # Store all operators in OPERATORS field if more than one
+                    if len(operators_list) > 1:
+                        all_operators = ','.join(operators_list)
+                        header += f"<OPERATORS:{len(all_operators)}>{all_operators}\n"
+            
+            # Application-specific fields for preserving Cabrillo data
+            if 'club' in contest_info:
+                header += f"<APP_C2A_CLUB:{len(contest_info['club'])}>{contest_info['club']}\n"
+            
+            if 'location' in contest_info:
+                location = contest_info['location']
+                header += f"<APP_C2A_LOCATION:{len(location)}>{location}\n"
+                
+                # Heuristic: if location is 2 letters, also set MY_STATE
+                if len(location) == 2 and location.isalpha():
+                    state_code = location.upper()
+                    header += f"<MY_STATE:{len(state_code)}>{state_code}\n"
+            
+            if 'created_by' in contest_info:
+                header += f"<APP_C2A_CREATED_BY:{len(contest_info['created_by'])}>{contest_info['created_by']}\n"
         
         header += "\n"
         return header
@@ -179,7 +235,7 @@ class ADIFGenerator:
             
             if qso.transmitter_id:
                 tx_id = str(qso.transmitter_id)
-                adif_fields.append(f"<TX_PWR:{len(tx_id)}>{tx_id}")
+                adif_fields.append(f"<APP_C2A_TXID:{len(tx_id)}>{tx_id}")
             
             adif_record = " ".join(adif_fields) + " <EOR>"
             return adif_record
